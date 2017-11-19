@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Scanner;
 import de.micromata.opengis.kml.v_2_2_0.Document;
+import de.micromata.opengis.kml.v_2_2_0.Folder;
 import de.micromata.opengis.kml.v_2_2_0.Kml;
 import de.micromata.opengis.kml.v_2_2_0.TimePrimitive;
 /**
@@ -429,8 +430,10 @@ public class ex0 {
 					if(! myFilter.filters(parts,filter)){
 						continue;
 					}
-					
-					document.createAndAddPlacemark().withName(parts[0]).withDescription(getDiscription(parts)).withOpen(Boolean.TRUE)  
+					String[] time = parts[0].split(" ");
+					Folder y =document.createAndAddFolder();
+					y.withName(parts[0]).createAndSetTimeStamp().setWhen(time[0]+"T"+time[1]+"Z");
+					y.createAndAddPlacemark().withName(parts[0]).withDescription(getDiscription(parts)).withOpen(Boolean.TRUE)  
 					.createAndSetPoint().addToCoordinates(Double.parseDouble(parts[3]), Double.parseDouble(parts[2]));
 				}
 				catch(Exception ex) {
