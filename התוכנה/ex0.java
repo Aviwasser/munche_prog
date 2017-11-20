@@ -307,7 +307,7 @@ public class ex0 {
 	 * if their are problems with the csv file this function will stop in the middle
 	 * @param path,
 	 */
-	public static void writeKml(String csvPath, String newKmlPath){
+	public static int writeKml(String csvPath, String newKmlPath){
 		try {
 			String userAns;
 			filter myFilter=null;
@@ -342,7 +342,6 @@ public class ex0 {
 					userAns=console.nextLine();
 					myFilter=new filterByID();
 
-					console.close();
 
 				}else{
 					do{
@@ -357,7 +356,7 @@ public class ex0 {
 								userAns=console.nextLine();
 								checkTime(userAns);
 								myFilter=new filterByTime();
-								console.close();
+								
 								break;
 							}catch(Exception e){
 								System.out.println("tipe it: year-month-day hour:minut:second");
@@ -365,7 +364,6 @@ public class ex0 {
 						}
 					}else{
 						myFilter=new dontFilter();
-						console.close();
 					}
 				}
 			}
@@ -376,6 +374,7 @@ public class ex0 {
 			outs.println("<Document>");
 			if(editPlacesToKml(outs,csvPath, myFilter,userAns)==0){
 				System.out.println("the file in the path is not good csv file that our function made");
+				return 0;
 			}
 			outs.println("</Document></kml>");
 			outs.close();
@@ -383,7 +382,9 @@ public class ex0 {
 		}
 		catch(IOException ex) {
 			System.out.print("Error writing\\reading file\n" + ex);
+			return 0;
 		}
+		return 1;
 	}
 	/**
 	 * if the string is not good, throws exeption
