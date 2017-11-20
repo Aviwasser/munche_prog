@@ -9,8 +9,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Scanner;
+import de.micromata.opengis.kml.v_2_2_0.Document;
+import de.micromata.opengis.kml.v_2_2_0.Folder;
+import de.micromata.opengis.kml.v_2_2_0.Kml;
+import de.micromata.opengis.kml.v_2_2_0.TimePrimitive;
 /**
  * 
  *       
@@ -22,8 +25,8 @@ public class ex0 {
 	private static final Exception Exception = null;
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		//toCsv("C:\\Download\\arye\\test1");
-		writeKml("C:\\Download\\arye\\test4\\wifi.csv","C:\\Download\\arye\\test4");
+		toCsv("C:\\Download\\arye\\test1");
+		writeKml("C:\\Download\\arye\\test1\\wifi.csv","C:\\Download\\arye\\test1");
 	}
 	/**
 	 * This program reads csv files in a given directory and builds a CSV file with with the
@@ -308,80 +311,69 @@ public class ex0 {
 	 * @param path,
 	 */
 	public static int writeKml(String csvPath, String newKmlPath){
-		try {
-			String userAns;
-			filter myFilter=null;
-			Scanner console = new Scanner(System.in);
-			do{
-				System.out.println("do you want to filter the low rxl? y/n");
-				userAns=console.next();
-			}while(!userAns.equals("n")&&!userAns.equals("y"));
-			if(userAns.equals("y")){
-				while(true){
-					try{
+		String userAns;
+		filter myFilter=null;
+		Scanner console = new Scanner(System.in);
+		do{
+			System.out.println("do you want to filter the low rxl? y/n");
+			userAns=console.next();
+		}while(!userAns.equals("n")&&!userAns.equals("y"));
+		if(userAns.equals("y")){
+			while(true){
+				try{
 					System.out.println("what is the min rxl?");
 					userAns=console.next();
 					Integer.parseInt(userAns);
 					break;
-					}catch(Exception e){
-						
-					}
+				}catch(Exception e){
+
 				}
-				myFilter=new filterByRXL();
+			}
+			myFilter=new filterByRXL();
+			console.close();
+
+		}
+		else{
+			do{
+				System.out.println("do you want to filter just one ID? y/n");
+				userAns=console.next();
+			}while(!userAns.equals("n")&&!userAns.equals("y"));
+			if(userAns.equals("y")){
+				System.out.println("what is the ID?");
+				console.nextLine();
+				userAns=console.nextLine();
+				myFilter=new filterByID();
+
 				console.close();
 
-			}
-			else{
+			}else{
 				do{
-					System.out.println("do you want to filter just one ID? y/n");
+					System.out.println("do you want to filter just the recent time? y/n");
 					userAns=console.next();
 				}while(!userAns.equals("n")&&!userAns.equals("y"));
 				if(userAns.equals("y")){
-					System.out.println("what is the ID?");
+					System.out.println("data from which time you want? tipe it: year-month-day hour:minut:second");
 					console.nextLine();
-					userAns=console.nextLine();
-					myFilter=new filterByID();
-
-
-				}else{
-					do{
-						System.out.println("do you want to filter just the recent time? y/n");
-						userAns=console.next();
-					}while(!userAns.equals("n")&&!userAns.equals("y"));
-					if(userAns.equals("y")){
-						System.out.println("data from which time you want? tipe it: year-month-day hour:minut:second");
-						console.nextLine();
-						while(true){
-							try{
-								userAns=console.nextLine();
-								checkTime(userAns);
-								myFilter=new filterByTime();
-								
-								break;
-							}catch(Exception e){
-								System.out.println("tipe it: year-month-day hour:minut:second");
-							}
+					while(true){
+						try{
+							userAns=console.nextLine();
+							checkTime(userAns);
+							myFilter=new filterByTime();
+							console.close();
+							break;
+						}catch(Exception e){
+							System.out.println("tipe it: year-month-day hour:minut:second");
 						}
-					}else{
-						myFilter=new dontFilter();
 					}
+				}else{
+					myFilter=new dontFilter();
+					console.close();
 				}
 			}
-			FileWriter fw = new FileWriter(newKmlPath+"\\wifi.kml");
-			PrintWriter outs = new PrintWriter(fw);
-			outs.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-			outs.println("<kml xmlns=\"http://www.opengis.net/kml/2.2\">");
-			outs.println("<Document>");
-			if(editPlacesToKml(outs,csvPath, myFilter,userAns)==0){
-				System.out.println("the file in the path is not good csv file that our function made");
-				return 0;
-			}
-			outs.println("</Document></kml>");
-			outs.close();
-			fw.close();
 		}
-		catch(IOException ex) {
-			System.out.print("Error writing\\reading file\n" + ex);
+
+		if(editPlacesToKml(newKmlPath,csvPath, myFilter,userAns)==0){
+			System.out.println("the file in the path is not good csv file that our function made");
 			return 0;
 		}
 		return 1;
@@ -419,8 +411,10 @@ public class ex0 {
 	 * @param filePlace-
 	 * @return 
 	 */
-	private static int editPlacesToKml(PrintWriter outs,String path,filter myFilter, String filter){
+	private static int editPlacesToKml(String newKmlPath,String path,filter myFilter, String filter){
 		try {
+			final Kml kml = new Kml();
+			Document document = kml.createAndSetDocument().withName("MyWifi");
 			FileReader fr = new FileReader(path);
 			BufferedReader br = new BufferedReader(fr);
 			String str;
@@ -436,31 +430,22 @@ public class ex0 {
 					if(! myFilter.filters(parts,filter)){
 						continue;
 					}
-					outs.println("<Placemark>");
-					outs.print("  <name>");
-					outs.print("Time: "+parts[0]+"ID: "+parts[1]);
-					outs.println("</name>");
-					outs.print("  <description><![CDATA[");
-					for(int j=6,counter=1;j<Integer.parseInt(parts[5])*4+6;j+=4,counter++){
-						if(parts[j+3]!="0"){
-							outs.print(" <br/>"+counter+": <br/>SSID: <b>"+parts[j]+"  <br/>MAC: <b>"+parts[j+1]+"  <br/>Channel: <b>"+parts[j+2]+"  <br/>Freqency: <b>"+parts[j+3]);
-						}
-					}
-					outs.println("]]></description><styleUrl>#red</styleUrl>");
-					outs.println("  <Point>");
-					outs.print("    <coordinates>");
-					outs.print(parts[3]+","+parts[2]);
-					outs.println("</coordinates>");
-					outs.println("  </Point>");
-					outs.println("</Placemark>");
+					String[] time = parts[0].split(" ");
+					Folder y =document.createAndAddFolder();
+					y.withName(parts[0]).createAndSetTimeStamp().setWhen(time[0]+"T"+time[1]+"Z");
+					y.createAndAddPlacemark().withName(parts[0]).withDescription(getDiscription(parts)).withOpen(Boolean.TRUE)  
+					.createAndSetPoint().addToCoordinates(Double.parseDouble(parts[3]), Double.parseDouble(parts[2]));
 				}
-				catch(Exception ex) { 
+				catch(Exception ex) {
+					System.out.println(ex);
 					br.close();// exception
 					return (0);//fail
 				}
 
 
 			}
+			//marshals into file
+			kml.marshal(new File(newKmlPath+"\\wifi.kml"));
 			br.close();
 			fr.close();
 			return 1;
@@ -470,6 +455,20 @@ public class ex0 {
 			System.exit(2);
 			return 0;
 		}
+	}
+	/**
+	 * 
+	 * @param array of one line from the csv file
+	 * @return String of all the discription of wifi's in the point
+	 */
+	private static String getDiscription(String[] info){
+		String discription="";
+		for(int j=6,counter=1;j<Integer.parseInt(info[5])*4+6;j+=4,counter++){
+			if(info[j+3]!="0"){
+				discription +=" <br/>"+counter+": <br/>SSID: <b>"+info[j]+"  <br/>MAC: <b>"+info[j+1]+"  <br/>Channel: <b>"+info[j+2]+"  <br/>Freqency: <b>"+info[j+3];
+			}
+		}
+		return discription;
 	}
 	/**
 	 * if line from csv file is not good, throw exeption
